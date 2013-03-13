@@ -45,6 +45,7 @@
     <Compile Include="Encrypting\CaesarCipher.cs" />
     <Compile Include="Encrypting\Cryptkeeper.cs" />
     <Compile Include="Encrypting\CryptRandom.cs" />
+    <Compile Include="Encrypting\DerivedValue.cs" />
     <Compile Include="Encrypting\Rot13.cs" />
     <Compile Include="Encrypting\xtea.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
