@@ -93,7 +93,7 @@ namespace SimWitty.Library.Core.Encrypting
             }
             finally
             {
-                if (pointer != IntPtr.Zero) System.Runtime.InteropServices.Marshal.ZeroFreeBSTR(pointer);
+                if (pointer != IntPtr.Zero) Marshal.ZeroFreeGlobalAllocAnsi(pointer);
             }
 
             System.Security.Cryptography.SHA256 sha = new System.Security.Cryptography.SHA256Managed();
