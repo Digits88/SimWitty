@@ -2,7 +2,7 @@
 //     Copyright © 2013 and distributed under the BSD license.
 // </copyright>
 
-namespace SimWitty.Library.Tools
+namespace SimWitty.Library.Interop
 {
     /// <summary>
     /// Static class containing byte arrays of shellcode examples.
