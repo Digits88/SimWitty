@@ -15,9 +15,9 @@ namespace SimWitty.Library.Core.Encrypting
     public class DerivedValue
     {
         /// <summary>
-        /// Internal pre-shared key value.
+        /// Internal hash of the pre-shared key value.
         /// </summary>
-        private SecureString preshared;
+        private byte[] hashed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DerivedValue" /> class.
@@ -25,13 +25,14 @@ namespace SimWitty.Library.Core.Encrypting
         /// <param name="encryptionKey">The encryption key represented in a byte array. Important note: such a byte array can be read in memory. Dispose of it quickly.</param>
         public DerivedValue(byte[] encryptionKey)
         {
-            this.preshared = new SecureString();
+            System.Security.Cryptography.SHA256 sha = new System.Security.Cryptography.SHA256Managed();
+            this.hashed = sha.ComputeHash(encryptionKey);
 
+            // Nulling the byte marks the byte for garbage collection but does not remove it from memory.
+            // Therefore, we zero the clear text byte to reduce the likelihood of data leakage.
             for (int i = 0; i < encryptionKey.Length; i++)
             {
-                byte b = encryptionKey[i];
-                char c = Convert.ToChar(b);
-                this.preshared.AppendChar(c);
+                encryptionKey[i] = 0;
             }
         }
 
@@ -41,7 +42,34 @@ namespace SimWitty.Library.Core.Encrypting
         /// <param name="passphrase">The encryption key or passphrase represented in a SecureString. This is the preferred method of instantiating this class because it protects the key in memory.</param>
         public DerivedValue(SecureString passphrase)
         {
-            this.preshared = passphrase.Copy();
+            int length = passphrase.Length;
+            byte[] clearbytes = new byte[length];
+            IntPtr pointer = IntPtr.Zero;
+
+            // Marshal the preshared key as a byte array
+            try
+            {
+                pointer = Marshal.SecureStringToGlobalAllocAnsi(passphrase);
+                Marshal.Copy(pointer, clearbytes, 0, length);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                if (pointer != IntPtr.Zero) Marshal.ZeroFreeGlobalAllocAnsi(pointer);
+            }
+
+            System.Security.Cryptography.SHA256 sha = new System.Security.Cryptography.SHA256Managed();
+            this.hashed = sha.ComputeHash(clearbytes);
+
+            // Nulling the byte marks the byte for garbage collection but does not remove it from memory.
+            // Therefore, we zero the clear text byte to reduce the likelihood of data leakage.
+            for (int i = 0; i < length; i++)
+            {
+                clearbytes[i] = 0;
+            }
         }
 
         /// <summary>
@@ -70,7 +98,8 @@ namespace SimWitty.Library.Core.Encrypting
         public byte[] GetBytes(uint rounds, int length)
         {
             System.Security.Cryptography.SHA256 sha = new System.Security.Cryptography.SHA256Managed();
-            byte[] buffer = this.GetHash();
+            byte[] buffer = new byte[this.hashed.Length];
+            Array.Copy(this.hashed, buffer, buffer.Length);
 
             if (length < 1) length = 1;
             if (length > buffer.Length) length = buffer.Length;
@@ -216,46 +245,6 @@ namespace SimWitty.Library.Core.Encrypting
         {
             byte[] value = this.GetBytes(rounds, 8);
             return BitConverter.ToInt64(value, 0);
-        }        
-
-        /// <summary>
-        /// Get the hash value of the pre-shared key.
-        /// All other members should use this method to reduce the likelihood of data leakage.
-        /// </summary>
-        /// <returns>A computed hash of the pre-shared key.</returns>
-        private byte[] GetHash()
-        {
-            int length = this.preshared.Length;
-            byte[] clearbytes = new byte[length];
-            IntPtr pointer = IntPtr.Zero;
-            
-            // Marshal the preshared key as a byte array
-            try
-            {
-                pointer = Marshal.SecureStringToGlobalAllocAnsi(this.preshared);
-                Marshal.Copy(pointer, clearbytes, 0, length);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                if (pointer != IntPtr.Zero) Marshal.ZeroFreeGlobalAllocAnsi(pointer);
-            }
-
-            System.Security.Cryptography.SHA256 sha = new System.Security.Cryptography.SHA256Managed();
-            byte[] hash = sha.ComputeHash(clearbytes);
-
-            // Nulling the byte marks the byte for garbage collection but does not remove it from memory.
-            // Therefore, we zero the clear text byte to reduce the likelihood of data leakage.
-            for (int i = 0; i < length; i++)
-            {
-                clearbytes[i] = 0;
-            }
-
-            // Return the hash value
-            return hash;
         }
     }
 }
