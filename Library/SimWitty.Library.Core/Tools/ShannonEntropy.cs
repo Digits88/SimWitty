@@ -126,6 +126,19 @@ namespace SimWitty.Library.Core.Tools
         }
 
         /// <summary>
+        /// Return an array of bytes without the length prefix and the spoofed suffix.
+        /// </summary>
+        /// <param name="bytes">The byte array previously encoded with the Spoof method.</param>
+        /// <returns>The resulting array is the signal found in the bytes: { byte[4] signal length} + { byte[] signal } + { byte[] noise }.</returns>
+        public static byte[] Despoof(byte[] bytes)
+        {
+            System.IO.BinaryReader reader = new System.IO.BinaryReader(new System.IO.MemoryStream(bytes, 0, bytes.Length));
+            int length = (int)reader.ReadUInt32();
+            byte[] message = reader.ReadBytes(length);
+            return message;
+        }
+
+        /// <summary>
         /// Return an array of bytes that contains the message along with random noise that spoofs the entropy value of a communications channel.
         /// </summary>
         /// <param name="signal">The byte array containing the communications.</param>

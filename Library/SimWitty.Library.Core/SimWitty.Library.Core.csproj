@@ -53,6 +53,7 @@
     <Compile Include="Tools\BinaryTools.cs" />
     <Compile Include="Tools\ConsoleTools.cs" />
     <Compile Include="Encrypting\Passgenerator.cs" />
+    <Compile Include="Tools\JaroWinkler.cs" />
     <Compile Include="Tools\ShannonEntropy.cs" />
     <Compile Include="Tools\StringTools.cs" />
   </ItemGroup>
